@@ -6,6 +6,7 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function App() {
+console.log("✅ App component mounted");
   const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
   const [formData, setFormData] = useState({ name: "", meme: null });
 
