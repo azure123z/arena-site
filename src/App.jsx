@@ -11,7 +11,8 @@ console.log("✅ App component mounted");
   const [formData, setFormData] = useState({ name: "", meme: null });
 
   useEffect(() => {
-    const fetchVotes = async () => {
+  const fetchVotes = async () => {
+    try {
       const { data, error } = await supabase.from("votes").select("option, count");
       if (error) {
         console.error("❌ Error fetching votes from Supabase:", error);
@@ -22,11 +23,13 @@ console.log("✅ App component mounted");
         acc[row.option] = row.count;
         return acc;
       }, {});
-      console.log("📊 Mapped vote data:", mapped);
       setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
-    };
-    fetchVotes();
-  }, []);
+    } catch (err) {
+      console.error("❌ Unexpected fetch error:", err);
+    }
+  };
+  fetchVotes();
+}, []);
 
   const vote = async (choice) => {
     const newCount = votes[choice] + 1;
