@@ -5,81 +5,79 @@ const supabaseUrl = "https://njqdwgkaywutklrcjpbu.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+
 export default function App() {
-console.log("✅ App component mounted");
+  console.log("✅ App component mounted");
   const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
+  const [wallet, setWallet] = useState("");
   const [formData, setFormData] = useState({ name: "", meme: null });
 
   useEffect(() => {
-  const fetchVotes = async () => {
-    try {
-      const { data, error } = await supabase.from("votes").select("option, count");
-      if (error) {
-        console.error("❌ Error fetching votes from Supabase:", error);
-        return;
+    const fetchVotes = async () => {
+      try {
+        const { data, error } = await supabase.from("votes").select("option, count");
+        if (error) {
+          console.error("❌ Error fetching votes from Supabase:", error);
+          return;
+        }
+        console.log("✅ Votes fetched successfully:", data);
+        const mapped = data.reduce((acc, row) => {
+          acc[row.option] = row.count;
+          return acc;
+        }, {});
+        setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
+      } catch (err) {
+        console.error("❌ Unexpected fetch error:", err);
       }
-      console.log("✅ Votes fetched successfully:", data);
-      const mapped = data.reduce((acc, row) => {
-        acc[row.option] = row.count;
-        return acc;
-      }, {});
-      setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
-    } catch (err) {
-      console.error("❌ Unexpected fetch error:", err);
+    };
+    fetchVotes();
+  }, []);
+
+  const vote = async (choice) => {
+    if (!wallet) {
+      alert("Por favor escribe tu Twitter o Wallet antes de votar.");
+      return;
     }
+
+    const { data: existingVote, error: checkError } = await supabase
+      .from("votes_log")
+      .select("*")
+      .eq("user", wallet)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing vote:", checkError);
+      return;
+    }
+
+    if (existingVote) {
+      alert("⛔ Ya has votado. Gracias por participar.");
+      return;
+    }
+
+    const newCount = votes[choice] + 1;
+    const { error: updateError } = await supabase
+      .from("votes")
+      .update({ count: newCount })
+      .eq("option", choice);
+
+    if (updateError) {
+      console.error("❌ Error updating vote:", updateError);
+      return;
+    }
+
+    const { error: logError } = await supabase
+      .from("votes_log")
+      .insert({ user: wallet, option: choice });
+
+    if (logError) {
+      console.error("❌ Error logging vote:", logError);
+      return;
+    }
+
+    setVotes((prev) => ({ ...prev, [choice]: newCount }));
+    alert("✅ Tu voto fue contado.");
   };
-  fetchVotes();
-}, []);
-
- const vote = async (choice) => {
-  if (!formData.name) {
-    alert("Please enter your Twitter or Wallet before voting.");
-    return;
-  }
-
-  // Verificar si ya votó
-  const { data: existingVote, error: checkError } = await supabase
-    .from("votes_log")
-    .select("*")
-    .eq("user", formData.name)
-    .maybeSingle();
-
-  if (checkError) {
-    console.error("Error checking existing vote:", checkError);
-    return;
-  }
-
-  if (existingVote) {
-    alert("⛔ You already voted.");
-    return;
-  }
-
-  // Actualizar contador en 'votes'
-  const newCount = votes[choice] + 1;
-  const { error: updateError } = await supabase
-    .from("votes")
-    .update({ count: newCount })
-    .eq("option", choice);
-
-  if (updateError) {
-    console.error("❌ Error updating vote:", updateError);
-    return;
-  }
-
-  // Registrar el voto en 'votes_log'
-  const { error: logError } = await supabase
-    .from("votes_log")
-    .insert({ user: formData.name, option: choice });
-
-  if (logError) {
-    console.error("❌ Error logging vote:", logError);
-    return;
-  }
-
-  // Actualizar estado local
-  setVotes((prev) => ({ ...prev, [choice]: newCount }));
-  alert("✅ We got your vote.");
-};
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -109,7 +107,15 @@ console.log("✅ App component mounted");
         <p className="text-xl mb-6 text-purple-300">
           Vote the funniest meme into glory.
         </p>
+
         <div className="flex flex-col items-center gap-4">
+          <input
+            type="text"
+            placeholder="Your Twitter or Wallet"
+            className="p-2 rounded bg-purple-800 text-white placeholder-purple-300"
+            value={wallet}
+            onChange={(e) => setWallet(e.target.value)}
+          />
           <button onClick={() => vote('doge')} className="bg-purple-700 px-6 py-2 rounded-xl">
             Vote Doge ({votes.doge})
           </button>
