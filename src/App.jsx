@@ -1,11 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://aklxscbdqnzwtyoqqfci.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbHhzY2JkcW56d3R5b3FxZmNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODYzMjEsImV4cCI6MjA2NjA2MjMyMX0.JyBOMT4BA8i1TQd_ailfGPN5Eaqp7wXg4I0bk-Ll0e0"; // ⚠️ Reemplaza esto con tu clave completa y segura
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function App() {
   const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
   const [formData, setFormData] = useState({ name: "", meme: null });
 
-  const vote = (choice) => {
-    setVotes((prev) => ({ ...prev, [choice]: prev[choice] + 1 }));
+  useEffect(() => {
+    const fetchVotes = async () => {
+      const { data, error } = await supabase.from("votes").select("option, count");
+      if (error) {
+        console.error("Error fetching votes:", error);
+        return;
+      }
+      const mapped = data.reduce((acc, row) => {
+        acc[row.option] = row.count;
+        return acc;
+      }, {});
+      setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
+    };
+    fetchVotes();
+  }, []);
+
+  const vote = async (choice) => {
+    const newCount = votes[choice] + 1;
+    const { error } = await supabase
+      .from("votes")
+      .update({ count: newCount })
+      .eq("option", choice);
+    if (error) {
+      console.error("Error updating vote:", error);
+      return;
+    }
+    setVotes((prev) => ({ ...prev, [choice]: newCount }));
   };
 
   const handleChange = (e) => {
