@@ -31,18 +31,20 @@ console.log("✅ App component mounted");
   fetchVotes();
 }, []);
 
-  const vote = async (choice) => {
-    const newCount = votes[choice] + 1;
-    const { error } = await supabase
-      .from("votes")
-      .update({ count: newCount })
-      .eq("option", choice);
-    if (error) {
-      console.error("Error updating vote:", error);
-      return;
-    }
-    setVotes((prev) => ({ ...prev, [choice]: newCount }));
-  };
+ const vote = async (choice) => {
+  const newCount = votes[choice] + 1;
+
+  const { error } = await supabase
+    .from("votes")
+    .upsert({ option: choice, count: newCount }, { onConflict: ['option'] });
+
+  if (error) {
+    console.error("❌ Error saving vote:", error);
+    return;
+  }
+
+  setVotes((prev) => ({ ...prev, [choice]: newCount }));
+};
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
