@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://aklxscbdqnzwtyoqqfci.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbHhzY2JkcW56d3R5b3FxZmNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODYzMjEsImV4cCI6MjA2NjA2MjMyMX0.JyBOMT4BA8i1TQd_ailfGPN5Eaqp7wXg4I0bk-Ll0e0"; // ⚠️ Reemplaza esto con tu clave completa y segura
+const supabaseUrl = "https://njqdwgkaywutklrcjpbu.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484"; // ⚠️ Reemplaza esto con tu clave completa y segura
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function App() {
