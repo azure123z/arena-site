@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = "https://njqdwgkaywutklrcjpbu.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484"; // ⚠️ Reemplaza esto con tu clave completa y segura
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function App() {
@@ -13,13 +13,15 @@ export default function App() {
     const fetchVotes = async () => {
       const { data, error } = await supabase.from("votes").select("option, count");
       if (error) {
-        console.error("Error fetching votes:", error);
+        console.error("❌ Error fetching votes from Supabase:", error);
         return;
       }
+      console.log("✅ Votes fetched successfully:", data);
       const mapped = data.reduce((acc, row) => {
         acc[row.option] = row.count;
         return acc;
       }, {});
+      console.log("📊 Mapped vote data:", mapped);
       setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
     };
     fetchVotes();
