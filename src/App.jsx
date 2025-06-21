@@ -5,7 +5,7 @@ const supabaseUrl = "https://aklxscb.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export default function App() {a
+export default function App() {
   const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
   const [formData, setFormData] = useState({ name: "", meme: null });
 
