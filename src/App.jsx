@@ -2,9 +2,31 @@ import { useState } from "react";
 
 export default function App() {
   const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
+  const [formData, setFormData] = useState({ name: "", meme: null });
 
   const vote = (choice) => {
     setVotes((prev) => ({ ...prev, [choice]: prev[choice] + 1 }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === "meme") {
+      setFormData((prev) => ({ ...prev, meme: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.meme) {
+      alert("Please enter your name and select a meme file.");
+      return;
+    }
+    console.log("Meme submitted:", formData);
+    alert("✅ Meme submitted! (This is a demo, no backend yet)");
+    setFormData({ name: "", meme: null });
+    e.target.reset();
   };
 
   return (
@@ -22,6 +44,33 @@ export default function App() {
             Vote Chihuahua ({votes.chihuahua})
           </button>
         </div>
+      </section>
+
+      <section className="max-w-md mx-auto bg-purple-950/50 p-6 rounded-2xl shadow-xl mt-12">
+        <h2 className="text-2xl font-semibold mb-4">🖼️ Submit Your Meme</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Twitter or Wallet"
+            className="p-2 rounded bg-purple-800 text-white placeholder-purple-300"
+            value={formData.name}
+            onChange={handleChange}
+          />
+          <input
+            type="file"
+            name="meme"
+            accept="image/*"
+            className="p-2 rounded bg-purple-800 text-white"
+            onChange={handleChange}
+          />
+          <button
+            type="submit"
+            className="bg-green-500 hover:bg-green-600 text-black font-semibold py-2 rounded-xl"
+          >
+            Submit Meme
+          </button>
+        </form>
       </section>
     </main>
   );
