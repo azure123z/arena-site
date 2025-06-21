@@ -32,18 +32,53 @@ console.log("✅ App component mounted");
 }, []);
 
  const vote = async (choice) => {
-  const newCount = votes[choice] + 1;
-
-  const { error } = await supabase
-    .from("votes")
-    .upsert({ option: choice, count: newCount }, { onConflict: ['option'] });
-
-  if (error) {
-    console.error("❌ Error saving vote:", error);
+  if (!formData.name) {
+    alert("Please enter your Twitter or Wallet before voting.");
     return;
   }
 
+  // Verificar si ya votó
+  const { data: existingVote, error: checkError } = await supabase
+    .from("votes_log")
+    .select("*")
+    .eq("user", formData.name)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error("Error checking existing vote:", checkError);
+    return;
+  }
+
+  if (existingVote) {
+    alert("⛔ You already voted.");
+    return;
+  }
+
+  // Actualizar contador en 'votes'
+  const newCount = votes[choice] + 1;
+  const { error: updateError } = await supabase
+    .from("votes")
+    .update({ count: newCount })
+    .eq("option", choice);
+
+  if (updateError) {
+    console.error("❌ Error updating vote:", updateError);
+    return;
+  }
+
+  // Registrar el voto en 'votes_log'
+  const { error: logError } = await supabase
+    .from("votes_log")
+    .insert({ user: formData.name, option: choice });
+
+  if (logError) {
+    console.error("❌ Error logging vote:", logError);
+    return;
+  }
+
+  // Actualizar estado local
   setVotes((prev) => ({ ...prev, [choice]: newCount }));
+  alert("✅ We got your vote.");
 };
 
   const handleChange = (e) => {
