@@ -103,7 +103,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-900 to-black text-white p-6">
       <section className="text-center py-16">
-        <h1 className="text-5xl font-bold mb-4">🐶 FunPump Meme Wars</h1>
+        <h1 className="text-5xl font-bold mb-4">🤣 Meme Showdown – Cast Your Vote for the Funniest!</h1>
         <p className="text-xl mb-6 text-purple-300">
           Vote the funniest meme into glory.
         </p>
