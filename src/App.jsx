@@ -35,7 +35,7 @@ export default function App() {
 
   const vote = async (choice) => {
     if (!wallet) {
-      alert("Por favor escribe tu Twitter o Wallet antes de votar.");
+      alert("Please type your X account or wallet before voting.");
       return;
     }
 
@@ -95,7 +95,7 @@ export default function App() {
       return;
     }
     console.log("Meme submitted:", formData);
-    alert("✅ Meme submitted! (This is a demo, no backend yet)");
+    alert("✅ Meme submitted! (We will review it)");
     setFormData({ name: "", meme: null });
     e.target.reset();
   };
@@ -151,6 +151,49 @@ export default function App() {
           </button>
         </form>
       </section>
+
+<footer className="mt-20 border-t border-purple-800 pt-12 pb-6 text-sm text-purple-300 bg-black">
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-8">
+      <p className="text-lg text-white mb-2 font-semibold">The ultimate destination for meme lovers to share, vote, and discover the funniest content on the internet.</p>
+      <p className="text-xs text-purple-400">© 2025 VoteMeme. All rights reserved.</p>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:text-left">
+      <div>
+        <h3 className="text-white font-semibold mb-2">Explore</h3>
+        <ul className="space-y-1">
+          <li><a href="#" className="hover:underline">Trending</a></li>
+          <li><a href="#" className="hover:underline">Top Memes</a></li>
+          <li><a href="#" className="hover:underline">Categories</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 className="text-white font-semibold mb-2">Community</h3>
+        <ul className="space-y-1">
+          <li><a href="#" className="hover:underline">Discord</a></li>
+          <li><a href="#" className="hover:underline">Submit Meme</a></li>
+          <li><a href="#" className="hover:underline">Feedback</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 className="text-white font-semibold mb-2">Support</h3>
+        <ul className="space-y-1">
+          <li><a href="#" className="hover:underline">Help Center</a></li>
+          <li><a href="#" className="hover:underline">Contact</a></li>
+          <li><a href="#" className="hover:underline">Guidelines</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div className="mt-10 text-center border-t border-purple-800 pt-4">
+      <a href="#" className="text-purple-400 hover:underline mx-2">Privacy Policy</a>
+      <span className="text-purple-600">|</span>
+      <a href="#" className="text-purple-400 hover:underline mx-2">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
     </main>
   );
 }
