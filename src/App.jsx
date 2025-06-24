@@ -21,7 +21,7 @@ const battles = [
 ];
 
 export default function App() {
-  const CONTRACT_ADDRESS = "0x123456675...abc";
+  const CONTRACT_ADDRESS = "Coming Soon";
   const [copied, setCopied] = useState(false);
   const [wallet, setWallet] = useState("");
   const [votes, setVotes] = useState({});
