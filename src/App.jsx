@@ -1,199 +1,323 @@
+import Logo from "./assets/clashlogo.png"; 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+import dogeImg from "./assets/doge.png";
+import chihuahuaImg from "./assets/chihuahua.png";
+import pepeImg from "./assets/pepe.png";
+import shibaImg from "./assets/shiba.png";
+import bonkImg from "./assets/bonk.png";
+import flokiImg from "./assets/floki.png";
+
 const supabaseUrl = "https://njqdwgkaywutklrcjpbu.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484";
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const battles = [
+  { id: "doge_vs_chihuahua", a: "Doge", b: "Chihuahua", aImg: dogeImg, bImg: chihuahuaImg },
+  { id: "pepe_vs_shiba", a: "Pepe", b: "Shiba", aImg: pepeImg, bImg: shibaImg },
+  { id: "bonk_vs_floki", a: "Bonk", b: "Floki", aImg: bonkImg, bImg: flokiImg },
+];
 
 export default function App() {
-  console.log("✅ App component mounted");
-  const [votes, setVotes] = useState({ doge: 0, chihuahua: 0 });
+  const CONTRACT_ADDRESS = "0x123456675...abc";
+  const [copied, setCopied] = useState(false);
   const [wallet, setWallet] = useState("");
-  const [formData, setFormData] = useState({ name: "", meme: null });
+  const [votes, setVotes] = useState({});
+  const [modalMeme, setModalMeme] = useState(null);
+  const [submittedMemes, setSubmittedMemes] = useState([]);
+  const [memeName, setMemeName] = useState("");
+  const [memeUrl, setMemeUrl] = useState("");
 
   useEffect(() => {
     const fetchVotes = async () => {
-      try {
-        const { data, error } = await supabase.from("votes").select("option, count");
-        if (error) {
-          console.error("❌ Error fetching votes from Supabase:", error);
-          return;
-        }
-        console.log("✅ Votes fetched successfully:", data);
-        const mapped = data.reduce((acc, row) => {
-          acc[row.option] = row.count;
-          return acc;
-        }, {});
-        setVotes({ doge: mapped.doge || 0, chihuahua: mapped.chihuahua || 0 });
-      } catch (err) {
-        console.error("❌ Unexpected fetch error:", err);
+      const { data, error } = await supabase.from("battle_votes").select("battle, option, count");
+      if (error) {
+        console.error("❌ Error fetching votes:", error);
+        return;
       }
+      const organized = {};
+      data.forEach(({ battle, option, count }) => {
+        if (!organized[battle]) organized[battle] = {};
+        organized[battle][option] = count;
+      });
+      setVotes(organized);
     };
     fetchVotes();
+
+    const fetchSubmittedMemes = async () => {
+      const { data, error } = await supabase.from("submitted_memes").select("*");
+      if (error) {
+        console.error("❌ Error fetching submitted memes:", error);
+        return;
+      }
+      setSubmittedMemes(data);
+    };
+    fetchSubmittedMemes();
   }, []);
 
-  const vote = async (choice) => {
+  const vote = async (battleId, choice) => {
     if (!wallet) {
-      alert("Please type your X account or wallet before voting.");
+      alert("Please enter your wallet or X handle to vote.");
       return;
     }
 
-    const { data: existingVote, error: checkError } = await supabase
-      .from("votes_log")
+    const { data: existingVote, error } = await supabase
+      .from("battle_log")
       .select("*")
       .eq("user", wallet)
+      .eq("battle", battleId)
       .maybeSingle();
 
-    if (checkError) {
-      console.error("Error checking existing vote:", checkError);
+    if (error) {
+      console.error("❌ Error checking vote:", error);
       return;
     }
 
     if (existingVote) {
-      alert("⛔ Ya has votado. Gracias por participar.");
+      alert("⛔ You already voted in this battle.");
       return;
     }
 
-    const newCount = votes[choice] + 1;
-    const { error: updateError } = await supabase
-      .from("votes")
-      .update({ count: newCount })
+    const current = votes?.[battleId]?.[choice] || 0;
+    const { error: updateErr } = await supabase
+      .from("battle_votes")
+      .update({ count: current + 1 })
+      .eq("battle", battleId)
       .eq("option", choice);
 
-    if (updateError) {
-      console.error("❌ Error updating vote:", updateError);
+    if (updateErr) {
+      console.error("❌ Failed to update vote:", updateErr);
       return;
     }
 
-    const { error: logError } = await supabase
-      .from("votes_log")
-      .insert({ user: wallet, option: choice });
+    await supabase.from("battle_log").insert({ user: wallet, battle: battleId, option: choice });
 
-    if (logError) {
-      console.error("❌ Error logging vote:", logError);
-      return;
-    }
-
-    setVotes((prev) => ({ ...prev, [choice]: newCount }));
-    alert("✅ Tu voto fue contado.");
+    setVotes((prev) => ({
+      ...prev,
+      [battleId]: {
+        ...prev[battleId],
+        [choice]: current + 1,
+      },
+    }));
+    alert("✅ Vote counted!");
   };
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "meme") {
-      setFormData((prev) => ({ ...prev, meme: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.meme) {
-      alert("Please enter your name and select a meme file.");
+  const submitMeme = async () => {
+    if (!memeName || !memeUrl) {
+      alert("Please provide both name and image URL.");
       return;
     }
-    console.log("Meme submitted:", formData);
-    alert("✅ Meme submitted! (We will review it)");
-    setFormData({ name: "", meme: null });
-    e.target.reset();
+    const { error } = await supabase.from("submitted_memes").insert({ name: memeName, url: memeUrl });
+    if (error) {
+      alert("Failed to submit meme.");
+      return;
+    }
+    alert("✅ Meme submitted!");
+    setSubmittedMemes((prev) => [...prev, { name: memeName, url: memeUrl }]);
+    setMemeName("");
+    setMemeUrl("");
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-900 to-black text-white p-6">
-      <section className="text-center py-16">
-        <h1 className="text-5xl font-bold mb-4">🤣 Meme Showdown – Cast Your Vote for the Funniest!</h1>
-        <p className="text-xl mb-6 text-purple-300">
-          Vote the funniest meme into glory.
-        </p>
+    <>
+    
+<header className="flex justify-end items-center p-4 bg-black text-white text-sm w-full">
+  <div className="flex items-center gap-4">
+    <img src={Logo} alt="Clash Arena Logo" className="h-12" /> {/* cambia la altura del logo */}
+    <div className="flex flex-col">
+      <span className="text-white text-base font-bold">$CLASH Contract:</span>
+      <span className="font-mono text-lg truncate max-w-xs">{CONTRACT_ADDRESS}</span> {/* text-base para agrandar */}
+    </div>
+    <div className="relative">
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(CONTRACT_ADDRESS);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+        className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-xs"
+        title="Copy to clipboard"
+      >
+        Copy
+      </button>
+      {copied && (
+        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black px-2 py-1 rounded shadow-lg">
+          Copied!
+        </div>
+      )}
+    </div>
+  </div>
+</header>
 
-        <div className="flex flex-col items-center gap-4">
+      <main className="min-h-screen bg-gradient-to-br from-purple-900 to-black text-white p-6">
+        <section className="text-center py-10">
+          <h1 className="text-4xl font-bold mb-4">🔥 Meme Battle Arena</h1>
           <input
             type="text"
-            placeholder="Your Twitter or Wallet"
-            className="p-2 rounded bg-purple-800 text-white placeholder-purple-300"
+            className="mb-6 p-2 rounded bg-purple-800 placeholder-purple-300"
+            placeholder="Your Wallet or X Handle"
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
           />
-          <button onClick={() => vote('doge')} className="bg-purple-700 px-6 py-2 rounded-xl">
-            Vote Doge ({votes.doge})
-          </button>
-          <button onClick={() => vote('chihuahua')} className="bg-purple-700 px-6 py-2 rounded-xl">
-            Vote Chihuahua ({votes.chihuahua})
-          </button>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {battles.map(({ id, a, b, aImg, bImg }) => (
+              <div key={id} className="bg-purple-800/20 p-4 rounded-xl text-center shadow-md">
+                <h3 className="text-lg font-semibold mb-3">{a} vs {b}</h3>
+                <div className="flex justify-center gap-6 mb-3">
+                  <div className="flex flex-col items-center">
+                    <img src={aImg} alt={a} className="w-24 h-24 rounded-full object-cover mb-2" />
+                    <button onClick={() => vote(id, a.toLowerCase())} className="bg-purple-700 px-4 py-1 rounded-xl">
+                      {a} ({votes?.[id]?.[a.toLowerCase()] || 0})
+                    </button>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <img src={bImg} alt={b} className="w-24 h-24 rounded-full object-cover mb-2" />
+                    <button onClick={() => vote(id, b.toLowerCase())} className="bg-purple-700 px-4 py-1 rounded-xl">
+                      {b} ({votes?.[id]?.[b.toLowerCase()] || 0})
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+       
+
+
+
+        <section className="max-w-6xl mx-auto px-4 py-12">
+          <h2 className="text-3xl font-bold text-white mb-6 text-center">🔥 Meme Arena</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[{ title: "Trumps Charts", image: "/assets/memes/trumpstrading.png" },
+              { title: "Bitkong", image: "/assets/memes/bitkong.png" },
+              { title: "Hodl", image: "/assets/memes/hodl.png" },
+              { title: "Relax", image: "/assets/memes/relax.png" },
+              { title: "Rugzilla", image: "/assets/memes/rugzilla.png" },
+              { title: "Pokelon", image: "/assets/memes/pokelon.png" },
+            ].map((meme, index) => (
+              <div key={index} className="bg-purple-950/60 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+                <img src={meme.image} alt={meme.title} className="w-full h-48 object-contain" />
+              <div className="p-4 text-center">
+  <h3 className="text-white font-semibold text-lg">{meme.title}</h3>
+  <button
+    onClick={() => setModalMeme(meme)}
+    className="mt-2 bg-purple-700 text-white px-4 py-1 rounded hover:bg-purple-800 text-sm"
+  >
+    View
+  </button>
+</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+<section className="max-w-6xl mx-auto px-4 py-12">
+  <h2 className="text-3xl font-bold text-white mb-6 text-center">🌐 Submitted Memes</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {(submittedMemes.length > 0 ? submittedMemes : [
+      { name: "Bit Guru", url: "/assets/memes/gurucoin.png" },
+      { name: "BitFrog", url: "/assets/memes/bitfrog.png" },
+      { name: "Astrelon", url: "/assets/memes/pokelon.png" }
+    ]).map((meme, index) => (
+      <div key={index} className="bg-purple-950/60 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+        <img src={meme.url} alt={meme.name} className="w-full h-48 object-contain" />
+        <div className="p-4 text-center">
+          <h3 className="text-white font-semibold text-lg truncate">{meme.name}</h3>
         </div>
-      </section>
-
-      <section className="max-w-md mx-auto bg-purple-950/50 p-6 rounded-2xl shadow-xl mt-12">
-        <h2 className="text-2xl font-semibold mb-4">🖼️ Submit Your Meme</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Your Twitter or Wallet"
-            className="p-2 rounded bg-purple-800 text-white placeholder-purple-300"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <input
-            type="file"
-            name="meme"
-            accept="image/*"
-            className="p-2 rounded bg-purple-800 text-white"
-            onChange={handleChange}
-          />
-          <button
-            type="submit"
-            className="bg-green-500 hover:bg-green-600 text-black font-semibold py-2 rounded-xl"
-          >
-            Submit Meme
-          </button>
-        </form>
-      </section>
-
-<footer className="mt-20 border-t border-purple-800 pt-12 pb-6 text-sm text-purple-300 bg-black">
-  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-8">
-      <p className="text-lg text-white mb-2 font-semibold">The ultimate destination for meme lovers to share, vote, and discover the funniest content on the internet.</p>
-      <p className="text-xs text-purple-400">© 2025 VoteMeme. All rights reserved.</p>
-    </div>
-
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:text-left">
-      <div>
-        <h3 className="text-white font-semibold mb-2">Explore</h3>
-        <ul className="space-y-1">
-          <li><a href="#" className="hover:underline">Trending</a></li>
-          <li><a href="#" className="hover:underline">Top Memes</a></li>
-          <li><a href="#" className="hover:underline">Categories</a></li>
-        </ul>
       </div>
-      <div>
-        <h3 className="text-white font-semibold mb-2">Community</h3>
-        <ul className="space-y-1">
-          <li><a href="#" className="hover:underline">Discord</a></li>
-          <li><a href="#" className="hover:underline">Submit Meme</a></li>
-          <li><a href="#" className="hover:underline">Feedback</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 className="text-white font-semibold mb-2">Support</h3>
-        <ul className="space-y-1">
-          <li><a href="#" className="hover:underline">Help Center</a></li>
-          <li><a href="#" className="hover:underline">Contact</a></li>
-          <li><a href="#" className="hover:underline">Guidelines</a></li>
-        </ul>
-      </div>
-    </div>
+    ))}
+  </div>
+</section>
 
-    <div className="mt-10 text-center border-t border-purple-800 pt-4">
-      <a href="#" className="text-purple-400 hover:underline mx-2">Privacy Policy</a>
-      <span className="text-purple-600">|</span>
-      <a href="#" className="text-purple-400 hover:underline mx-2">Terms of Service</a>
+
+<section className="max-w-xl mx-auto px-4 py-12">
+  <h2 className="text-2xl font-bold text-white mb-4 text-center">📤 Submit Your Meme</h2>
+  <div className="bg-purple-950 p-6 rounded-xl shadow-md">
+    <input
+      type="text"
+      placeholder="Meme Name"
+      value={memeName}
+      onChange={(e) => setMemeName(e.target.value)}
+      className="w-full mb-4 p-2 rounded bg-purple-800 placeholder-purple-300 text-white"
+    />
+    <input
+      type="text"
+      placeholder="Image URL (e.g. https://...)"
+      value={memeUrl}
+      onChange={(e) => setMemeUrl(e.target.value)}
+      className="w-full mb-4 p-2 rounded bg-purple-800 placeholder-purple-300 text-white"
+    />
+    <button
+      onClick={submitMeme}
+      className="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800"
+    >
+      Submit Meme
+    </button>
+  </div>
+</section>
+
+
+ {modalMeme && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+            <div className="bg-purple-950 rounded-xl p-6 relative max-w-lg w-full">
+              <button
+                onClick={() => setModalMeme(null)}
+                className="absolute top-2 right-3 text-white text-xl"
+              >
+                ✖
+              </button>
+              <img src={modalMeme.image} alt={modalMeme.title} className="w-full h-auto mb-4 rounded" />
+              <h3 className="text-white text-2xl font-bold mb-2 text-center">{modalMeme.title}</h3>
+            </div>
+          </div>
+        )}
+   
+      </main>
+
+
+<footer className="bg-purple-950 text-white px-6 py-12 mt-16 text-sm">
+  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div className="md:col-span-1">
+      <h3 className="text-xl font-bold mb-2">Clash Arena</h3>
+      <p className="text-purple-300">The ultimate destination for meme lovers to share, vote, and discover the funniest content on the internet. Clash Arena $CLASH is the meme coin</p>
     </div>
+    <div>
+      <h4 className="font-semibold mb-2">Explore</h4>
+      <ul className="space-y-1 text-purple-400">
+        <li><a href="#">Meme Battles</a></li>
+        <li><a href="#">Submit a Meme</a></li>
+        <li><a href="#">Top Memes</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 className="font-semibold mb-2">Community</h4>
+      <ul className="space-y-1 text-purple-400">
+           <li><a href="https://twitter.com/clasharenamemes" target="_blank" rel="noopener noreferrer">Twitter / X</a></li>
+  
+      </ul>
+    </div>
+    <div>
+      <h4 className="font-semibold mb-2">Support</h4>
+      <ul className="space-y-1 text-purple-400">
+        <li><a href="#">FAQ</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Help Center</a></li>
+      </ul>
+    </div>
+  </div>
+  <div className="text-center mt-12 text-purple-400 border-t border-purple-700 pt-6">
+    © 2025 Clash Arena. All rights reserved. — <a href="#" className="underline">Privacy Policy</a> · <a href="#" className="underline">Terms of Service</a>
   </div>
 </footer>
 
-    </main>
+
+
+
+    </>
   );
 }
