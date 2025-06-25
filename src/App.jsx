@@ -63,6 +63,8 @@ export default function App() {
 
   fetchVotes();
 fetchSubmittedMemes();
+}, []); // finish useeffect
+
 
 
 const vote = async (battleId, choice) => {
