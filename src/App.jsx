@@ -66,7 +66,7 @@ export default function App() {
     const { data: existingVote, error } = await supabase
       .from("battle_log")
       .select("*")
-      .eq("user", wallet)
+      .eq("username", wallet)
       .eq("battle", battleId)
       .maybeSingle();
 
@@ -92,7 +92,7 @@ export default function App() {
       return;
     }
 
-    await supabase.from("battle_log").insert({ user: wallet, battle: battleId, option: choice });
+    await supabase.from("battle_log").insert({ username: wallet, battle: battleId, option: choice });
 
     setVotes((prev) => ({
       ...prev,
