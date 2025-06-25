@@ -51,7 +51,7 @@ export default function App() {
   const { data, error } = await supabase
     .from("submitted_memes")
     .select("*")
-    .eq("approved", true); // Solo memes aprobados
+    .eq("approved", true); // only approved memes
 
   if (error) {
     console.error("❌ Error fetching submitted memes:", error);
