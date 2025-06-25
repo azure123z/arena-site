@@ -57,12 +57,16 @@ export default function App() {
     fetchSubmittedMemes();
   }, []);
 
-  const vote = async (battleId, choice) => {
+  
+
+
+const vote = async (battleId, choice) => {
   if (!wallet) {
     alert("Please enter your wallet or X handle to vote.");
     return;
   }
 
+  // Verifica si ya votó este usuario en este battle
   const { data: existingVote, error } = await supabase
     .from("battle_log")
     .select("*")
@@ -82,24 +86,18 @@ export default function App() {
 
   const current = votes?.[battleId]?.[choice] || 0;
 
-  // Intentar actualizar
-  const { error: updateErr, count: updatedRows } = await supabase
+  // Usa UPSERT (insert or update)
+  const { error: upsertError } = await supabase
     .from("battle_votes")
-    .update({ count: current + 1 })
-    .eq("battle", battleId)
-    .eq("option", choice);
+    .upsert(
+      { battle: battleId, option: choice, count: current + 1 },
+      { onConflict: ["battle", "option"] }
+    );
 
-  // Si no se actualizó nada, insertar nuevo
-  if (updateErr || updatedRows === 0) {
-    const { error: insertErr } = await supabase
-      .from("battle_votes")
-      .insert({ battle: battleId, option: choice, count: 1 });
-
-    if (insertErr) {
-      console.error("❌ Failed to insert new vote record:", insertErr);
-      alert("Failed to register vote.");
-      return;
-    }
+  if (upsertError) {
+    console.error("❌ Failed to upsert vote:", upsertError);
+    alert("Failed to register vote.");
+    return;
   }
 
   await supabase.from("battle_log").insert({ username: wallet, battle: battleId, option: choice });
@@ -114,6 +112,7 @@ export default function App() {
 
   alert("✅ Vote counted!");
 };
+
 
 
   const submitMeme = async () => {
