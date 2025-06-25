@@ -44,6 +44,7 @@ export default function App() {
       });
       setVotes(organized);
     };
+
     fetchVotes();
 
 
@@ -60,7 +61,8 @@ export default function App() {
   setSubmittedMemes(data);
 };
 
-  
+  fetchVotes();
+fetchSubmittedMemes();
 
 
 const vote = async (battleId, choice) => {
