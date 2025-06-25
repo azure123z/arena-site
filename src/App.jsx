@@ -155,19 +155,6 @@ const vote = async (battleId, choice) => {
 
 
 
-
-
-    const { error } = await supabase.from("submitted_memes").insert({ name: memeName, url: memeUrl });
-    if (error) {
-      alert("Failed to submit meme.");
-      return;
-    }
-    alert("✅ Meme submitted!");
-    setSubmittedMemes((prev) => [...prev, { name: memeName, url: memeUrl }]);
-    setMemeName("");
-    setMemeUrl("");
-  };
-
   return (
     <>
     
