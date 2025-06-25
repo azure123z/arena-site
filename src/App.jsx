@@ -46,16 +46,19 @@ export default function App() {
     };
     fetchVotes();
 
+
     const fetchSubmittedMemes = async () => {
-      const { data, error } = await supabase.from("submitted_memes").select("*");
-      if (error) {
-        console.error("❌ Error fetching submitted memes:", error);
-        return;
-      }
-      setSubmittedMemes(data);
-    };
-    fetchSubmittedMemes();
-  }, []);
+  const { data, error } = await supabase
+    .from("submitted_memes")
+    .select("*")
+    .eq("approved", true); // Solo memes aprobados
+
+  if (error) {
+    console.error("❌ Error fetching submitted memes:", error);
+    return;
+  }
+  setSubmittedMemes(data);
+};
 
   
 
@@ -115,11 +118,45 @@ const vote = async (battleId, choice) => {
 
 
 
-  const submitMeme = async () => {
-    if (!memeName || !memeUrl) {
-      alert("Please provide both name and image URL.");
-      return;
-    }
+
+ const submitMeme = async () => {
+  if (!memeName || !memeUrl) {
+    alert("Please provide both name and image URL.");
+    return;
+  }
+
+  if (!/\.(jpg|jpeg|png|gif|webp)$/i.test(memeUrl)) {
+    alert("Please enter a valid image URL (jpg, png, gif, webp, etc.)");
+    return;
+  }
+
+  const duplicate = submittedMemes.some(
+    (meme) => meme.name.toLowerCase() === memeName.toLowerCase() || meme.url === memeUrl
+  );
+
+  if (duplicate) {
+    alert("This meme has already been submitted.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("submitted_memes")
+    .insert({ name: memeName, url: memeUrl, approved: false });
+
+  if (error) {
+    alert("Failed to submit meme.");
+    return;
+  }
+
+  alert("✅ Meme submitted for review!");
+  setMemeName("");
+  setMemeUrl("");
+};
+
+
+
+
+
     const { error } = await supabase.from("submitted_memes").insert({ name: memeName, url: memeUrl });
     if (error) {
       alert("Failed to submit meme.");
