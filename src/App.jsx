@@ -261,6 +261,7 @@ const vote = async (battleId, choice) => {
     {(submittedMemes.length > 0 ? submittedMemes : [
       { name: "Bit Guru", url: "/assets/memes/gurucoin.png" },
       { name: "BitFrog", url: "/assets/memes/bitfrog.png" },
+{ name: "Pengu", url: "/assets/memes/pengu.png" },
       { name: "Astrelon", url: "/assets/memes/pokelon.png" }
     ]).map((meme, index) => (
       <div key={index} className="bg-purple-950/60 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
