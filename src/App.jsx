@@ -236,7 +236,7 @@ const vote = async (battleId, choice) => {
               { title: "Hodl", image: "/assets/memes/hodl.png" },
               { title: "Relax", image: "/assets/memes/relax.png" },
               { title: "Rugzilla", image: "/assets/memes/rugzilla.png" },
-              { title: "Pokelon", image: "/assets/memes/pokelon.png" },
+              { title: "Polite", image: "/assets/memes/polite.png" },
             ].map((meme, index) => (
               <div key={index} className="bg-purple-950/60 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                 <img src={meme.image} alt={meme.title} className="w-full h-48 object-contain" />
