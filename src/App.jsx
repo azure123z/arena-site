@@ -9,6 +9,8 @@ import shibaImg from "./assets/shiba.png";
 import bonkImg from "./assets/bonk.png";
 import flokiImg from "./assets/floki.png";
 
+import SocialShareButtons from "./SocialShareButtons";
+
 const supabaseUrl = "https://njqdwgkaywutklrcjpbu.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWR3Z2theXd1dGtscmNqcGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0ODY0MjIsImV4cCI6MjA2NjA2MjQyMn0.nVlCUoohdYGmqn0y-l-Ae7aldDZSY9yyFgJp7d68484";
 
@@ -29,6 +31,7 @@ export default function App() {
   const [submittedMemes, setSubmittedMemes] = useState([]);
   const [memeName, setMemeName] = useState("");
   const [memeUrl, setMemeUrl] = useState("");
+const [contactInfo, setContactInfo] = useState(""); // puede ser email o wallet para el submitted memes
 
   useEffect(() => {
     const fetchVotes = async () => {
@@ -67,6 +70,7 @@ fetchSubmittedMemes();
 
 
 
+ {/* funcion vote */}
 const vote = async (battleId, choice) => {
   if (!wallet) {
     alert("Please enter your wallet or X handle to vote.");
@@ -123,6 +127,7 @@ const vote = async (battleId, choice) => {
 
 
 
+
  const submitMeme = async () => {
   if (!memeName || !memeUrl) {
     alert("Please provide both name and image URL.");
@@ -145,7 +150,7 @@ const vote = async (battleId, choice) => {
 
   const { error } = await supabase
     .from("submitted_memes")
-    .insert({ name: memeName, url: memeUrl, approved: false });
+    .insert({ name: memeName, url: memeUrl, approved: false, contact: contactInfo });
 
   if (error) {
     alert("Failed to submit meme.");
@@ -262,17 +267,33 @@ const vote = async (battleId, choice) => {
       { name: "Bit Guru", url: "/assets/memes/gurucoin.png" },
       { name: "BitFrog", url: "/assets/memes/bitfrog.png" },
 { name: "Pengu", url: "/assets/memes/pengu.png" },
-      { name: "Astrelon", url: "/assets/memes/pokelon.png" }
+      { name: "Astrelon", url: "/assets/memes/Pokelon.png" }
     ]).map((meme, index) => (
       <div key={index} className="bg-purple-950/60 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
         <img src={meme.url} alt={meme.name} className="w-full h-48 object-contain" />
         <div className="p-4 text-center">
           <h3 className="text-white font-semibold text-lg truncate">{meme.name}</h3>
+
+ {/* Botón de votar */}
+      <button
+        onClick={() => vote("submitted_memes_vote", meme.name.toLowerCase())}
+        className="mt-2 bg-purple-700 text-white px-4 py-1 rounded hover:bg-purple-800 text-sm"
+      >
+        Vote
+      </button>
+
+ {/* Mostrar cantidad de votos */}
+    <p className="text-purple-300 mt-1 text-sm">
+      Votes: {votes?.["submitted_memes_vote"]?.[meme.name.toLowerCase()] || 0}
+    </p>
+
+<SocialShareButtons meme={meme} />
         </div>
       </div>
     ))}
   </div>
 </section>
+
 
 
 <section className="max-w-xl mx-auto px-4 py-12">
@@ -292,6 +313,14 @@ const vote = async (battleId, choice) => {
       onChange={(e) => setMemeUrl(e.target.value)}
       className="w-full mb-4 p-2 rounded bg-purple-800 placeholder-purple-300 text-white"
     />
+<input
+  type="text"
+  placeholder="Your Email or Solana Wallet"
+  value={contactInfo}
+  onChange={(e) => setContactInfo(e.target.value)}
+  className="w-full mb-4 p-2 rounded bg-purple-800 placeholder-purple-300 text-white"
+/>
+
     <button
       onClick={submitMeme}
       className="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800"
